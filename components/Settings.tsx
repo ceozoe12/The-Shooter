@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { AppConfig } from '../types';
 
@@ -12,9 +11,9 @@ const Settings: React.FC<SettingsProps> = ({ onSave }) => {
   const [adminPass, setAdminPass] = useState('');
   const [error, setError] = useState('');
 
-  // Pre-filled with the Stripe Secret Key provided by the administrator
+  // Updated with the new Live Stripe Key provided by the user
   const [config, setConfig] = useState<AppConfig>({
-    stripePublicKey: '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',
+    stripePublicKey: 'mk_1Sfx5p0Z7icb3eU0ZY5FTKGm',
     canvaApiKey: '',
     blotatoApiKey: '',
     blotatoAccounts: []

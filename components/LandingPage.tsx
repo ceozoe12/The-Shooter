@@ -10,9 +10,11 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, user }) => {
   const [email, setEmail] = useState('');
+  const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [adminPass, setAdminPass] = useState('');
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    // Safely access Google Client ID using optional chaining to prevent TypeError
     const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
     
     if (window.google?.accounts?.id && clientId) {
@@ -34,8 +36,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
           logo_alignment: "left"
         }
       );
-    } else if (!clientId) {
-      console.warn("VITE_GOOGLE_CLIENT_ID not found in environment metadata.");
     }
   }, []);
 
@@ -63,6 +63,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin({ name: email.split('@')[0], email });
+  };
+
+  const handleAdminVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Using the established secure admin password
+    if (adminPass === 'NatalieYvonne610!') {
+      onLogin({ name: 'Owner', email: 'owner@theshooter.pro' });
+      setShowAdminLogin(false);
+    } else {
+      setLoginError('Invalid Access Token');
+    }
   };
 
   const isViteEnvMissing = !(import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
@@ -97,6 +108,46 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[120px]"></div>
       </div>
+
+      {showAdminLogin && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4">
+          <div className="max-w-md w-full bg-slate-800 p-8 rounded-[2.5rem] border border-slate-700 shadow-2xl space-y-6">
+            <div className="w-16 h-16 bg-red-600/10 rounded-2xl flex items-center justify-center border border-red-500/20 mx-auto">
+              <i className="fa-solid fa-user-shield text-3xl text-red-500"></i>
+            </div>
+            <div className="text-center">
+              <h2 className="text-xl font-black italic uppercase tracking-tighter text-white">Owner Access Control</h2>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1">Personnel Verification Required</p>
+            </div>
+            <form onSubmit={handleAdminVerify} className="space-y-4">
+              <input 
+                type="password" 
+                placeholder="Access Password"
+                value={adminPass}
+                onChange={(e) => setAdminPass(e.target.value)}
+                autoFocus
+                className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-red-600 transition-all font-bold placeholder:text-slate-700"
+              />
+              {loginError && <p className="text-red-500 text-[10px] font-black uppercase text-center animate-pulse">{loginError}</p>}
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="button"
+                  onClick={() => setShowAdminLogin(false)}
+                  className="flex-1 py-4 bg-slate-900 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-600/20 active:scale-95"
+                >
+                  Confirm
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-5xl w-full space-y-20 animate-in fade-in zoom-in duration-700 z-10 py-12">
         <section className="space-y-8">
@@ -134,7 +185,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
 
                 {isViteEnvMissing && (
                   <button 
-                    onClick={() => onLogin({ name: 'Owner', email: 'owner@theshooter.pro' })}
+                    onClick={() => setShowAdminLogin(true)}
                     className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic"
                   >
                     <i className="fa-solid fa-bolt"></i>
