@@ -68,7 +68,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
   const handleAdminVerify = (e: React.FormEvent) => {
     e.preventDefault();
     // Using the established secure admin password
-    if (adminPass === 'NatalieYvonne610!') {
+    if (adminPass === 'TheShooter12') {
       onLogin({ name: 'Owner', email: 'owner@theshooter.pro' });
       setShowAdminLogin(false);
     } else {

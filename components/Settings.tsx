@@ -21,7 +21,7 @@ const Settings: React.FC<SettingsProps> = ({ onSave }) => {
 
   const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminUser === 'SysAdmin' && adminPass === 'NatalieYvonne610!') {
+    if (adminUser === 'SysAdmin' && adminPass === 'TheShooter12') {
       setIsAuthenticated(true);
       setError('');
     } else {
