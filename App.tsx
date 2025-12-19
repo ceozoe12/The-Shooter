@@ -55,6 +55,7 @@ const App: React.FC = () => {
     localStorage.setItem('shooter_credits', JSON.stringify(credits));
   }, [credits]);
 
+  // Handle Owner Mode Activation
   useEffect(() => {
     const checkApiKey = async () => {
       const envKeyExists = !!process.env.API_KEY;
@@ -66,17 +67,20 @@ const App: React.FC = () => {
       
       const hasKey = envKeyExists || studioKeyExists;
       
+      // Determine if current logged in user is the Admin/Owner
+      const isAdmin = user.email === 'owner@theshooter.pro';
+
       setCredits(prev => ({ 
         ...prev, 
         apiKeySet: hasKey,
-        // IF API_KEY is set in Vercel, grant UNLIMITED status
-        subscriptionLevel: envKeyExists ? 'pro' : prev.subscriptionLevel,
-        creditsRemaining: envKeyExists ? 9999 : prev.creditsRemaining,
-        freeGenerationsRemaining: envKeyExists ? 0 : prev.freeGenerationsRemaining
+        // Only grant unlimited credits if it's the ADMIN user
+        subscriptionLevel: isAdmin ? 'pro' : prev.subscriptionLevel,
+        creditsRemaining: isAdmin ? 9999 : prev.creditsRemaining,
+        freeGenerationsRemaining: isAdmin ? 0 : prev.freeGenerationsRemaining
       }));
     };
     checkApiKey();
-  }, []);
+  }, [user.email]); // Re-run when user logs in/out to update permissions
 
   const handleStart = () => {
     if (!user.isLoggedIn) {
@@ -110,8 +114,8 @@ const App: React.FC = () => {
   const handleGenerate = (newImages: GeneratedImage[]) => {
     setGallery(prev => [...newImages, ...prev]);
     
-    // Don't deduct from owners (9999 credits)
-    if (credits.creditsRemaining > 500) return;
+    // Don't deduct from owners
+    if (credits.creditsRemaining > 9000) return;
 
     setCredits(prev => {
       const count = newImages.length;
@@ -127,7 +131,7 @@ const App: React.FC = () => {
     setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
     if (selectedImage?.id === oldId) setSelectedImage(newImage);
     
-    if (credits.creditsRemaining > 500) return;
+    if (credits.creditsRemaining > 9000) return;
 
     setCredits(prev => ({ ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - 1) }));
   };

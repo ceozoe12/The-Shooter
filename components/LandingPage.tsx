@@ -13,8 +13,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
   const [email, setEmail] = useState('');
 
   useEffect(() => {
-    // Initialize Google Login if available and ID is provided
-    const clientId = process.env.GOOGLE_CLIENT_ID;
+    // Fix: Use process.env instead of import.meta.env as 'env' property is not recognized on ImportMeta in this environment
+    const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
     
     if (window.google?.accounts?.id && clientId) {
       window.google.accounts.id.initialize({
@@ -36,17 +36,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
         }
       );
     } else if (!clientId) {
-      console.warn("GOOGLE_CLIENT_ID not found in environment variables. Google Login disabled.");
+      console.warn("Google Client ID not found. Google Login disabled.");
     }
   }, []);
 
   const handleGoogleResponse = (response: any) => {
-    // In production, you would send response.credential to your backend to verify
-    // For this frontend-only implementation, we decode the basic info if needed
-    // or simply trust the callback was triggered by a successful Google Auth.
-    
-    // Decoding JWT (base64) to get user info for a better UX
     try {
+      // Decode the JWT ID Token to get user profile information
       const base64Url = response.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -62,6 +58,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
       });
     } catch (e) {
       console.error("Failed to decode Google Credential", e);
+      // Fallback for non-standard responses
       onLogin({ name: 'Google Creator', email: 'verified@google.user' });
     }
   };
@@ -137,16 +134,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
               <div className="grid grid-cols-1 gap-4">
                 
                 <div id="googleSignInDiv" className="flex justify-center mb-2 min-h-[50px]"></div>
-                
-                {!process.env.GOOGLE_CLIENT_ID && (
-                  <button 
-                    onClick={() => onLogin({ name: 'Owner', email: 'owner@theshooter.pro' })}
-                    className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic"
-                  >
-                    <i className="fa-solid fa-bolt"></i>
-                    Owner Quick-Entry
-                  </button>
-                )}
                 
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-700"></div>

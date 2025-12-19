@@ -62,7 +62,7 @@ export interface AIStudio {
 declare global {
   interface Window {
     google: any;
-    // Updated aistudio to match the expected AIStudio type and optional modifier from the global context
+    // Fix: Using AIStudio type to avoid "subsequent property declarations" error when aistudio is already defined elsewhere
     aistudio?: AIStudio;
   }
 }
