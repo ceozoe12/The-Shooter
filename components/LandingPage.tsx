@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 
@@ -13,8 +12,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
   const [email, setEmail] = useState('');
 
   useEffect(() => {
-    // Fix: Use process.env instead of import.meta.env as 'env' property is not recognized on ImportMeta in this environment
-    const clientId = process.env.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
+    // Safely access Google Client ID using optional chaining to prevent TypeError
+    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
     
     if (window.google?.accounts?.id && clientId) {
       window.google.accounts.id.initialize({
@@ -36,13 +35,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
         }
       );
     } else if (!clientId) {
-      console.warn("Google Client ID not found. Google Login disabled.");
+      console.warn("VITE_GOOGLE_CLIENT_ID not found in environment metadata.");
     }
   }, []);
 
   const handleGoogleResponse = (response: any) => {
     try {
-      // Decode the JWT ID Token to get user profile information
       const base64Url = response.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -58,7 +56,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
       });
     } catch (e) {
       console.error("Failed to decode Google Credential", e);
-      // Fallback for non-standard responses
       onLogin({ name: 'Google Creator', email: 'verified@google.user' });
     }
   };
@@ -67,6 +64,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
     e.preventDefault();
     onLogin({ name: email.split('@')[0], email });
   };
+
+  const isViteEnvMissing = !(import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
 
   const reviews = [
     {
@@ -94,14 +93,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col items-center p-6 text-center relative overflow-x-hidden">
-      {/* Background Decor */}
       <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[120px]"></div>
       </div>
 
       <div className="max-w-5xl w-full space-y-20 animate-in fade-in zoom-in duration-700 z-10 py-12">
-        {/* Hero Section */}
         <section className="space-y-8">
           <div className="inline-block p-4 bg-blue-600/10 rounded-2xl border border-blue-500/20 mb-4">
             <i className="fa-solid fa-camera-retro text-4xl text-blue-600"></i>
@@ -134,6 +131,16 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
               <div className="grid grid-cols-1 gap-4">
                 
                 <div id="googleSignInDiv" className="flex justify-center mb-2 min-h-[50px]"></div>
+
+                {isViteEnvMissing && (
+                  <button 
+                    onClick={() => onLogin({ name: 'Owner', email: 'owner@theshooter.pro' })}
+                    className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic"
+                  >
+                    <i className="fa-solid fa-bolt"></i>
+                    Owner Quick-Entry
+                  </button>
+                )}
                 
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-700"></div>
@@ -162,7 +169,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
           )}
         </section>
 
-        {/* Proof of Concept Stats */}
         <section className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 bg-blue-600/5 p-8 rounded-[3rem] border border-blue-500/10">
            <div className="text-center">
              <h4 className="text-4xl font-black text-white italic leading-none">20h+</h4>
@@ -182,7 +188,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
            </div>
         </section>
 
-        {/* Reviews Section */}
         <section className="space-y-12">
            <div className="space-y-2">
              <h2 className="text-3xl font-black italic uppercase tracking-tighter text-white">Production Feedback</h2>

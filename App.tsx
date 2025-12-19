@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import GenerationStudio from './components/GenerationStudio';
@@ -58,7 +57,8 @@ const App: React.FC = () => {
   // Handle Owner Mode Activation
   useEffect(() => {
     const checkApiKey = async () => {
-      const envKeyExists = !!process.env.API_KEY;
+      // Safer check for process.env to avoid ReferenceError
+      const envKeyExists = typeof process !== 'undefined' && !!process.env.API_KEY;
       let studioKeyExists = false;
       
       if (window.aistudio?.hasSelectedApiKey) {

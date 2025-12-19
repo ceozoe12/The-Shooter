@@ -1,7 +1,6 @@
-
 import React, { useState, useRef } from 'react';
 import { CreditState, GeneratedImage, BatchSize, User } from '../types';
-import { generateBatchImages, generateSingleImage, enhancePrompt } from '../services/geminiService';
+import { generateBatchImages, generateSingleImage, enhancePrompt, analyzeCharacterDNA } from '../services/geminiService';
 import { ASPECT_RATIOS, REFUND_DISCLAIMER } from '../constants';
 
 interface GenerationStudioProps {
@@ -29,6 +28,8 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
   const [selectedRatio, setSelectedRatio] = useState('3:4');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [characterDNA, setCharacterDNA] = useState<string | null>(null);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [zoomedImage, setZoomedImage] = useState<GeneratedImage | null>(null);
@@ -51,6 +52,8 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
           if (activeCategory === 'face') setFaceRefs(prev => [...prev, result].slice(0, 15));
           else if (activeCategory === 'style') setStyleRefs(prev => [...prev, result].slice(0, 15));
           else if (activeCategory === 'scene') setSceneRefs(prev => [...prev, result].slice(0, 15));
+          // Reset DNA if face refs change
+          if (activeCategory === 'face') setCharacterDNA(null);
         };
         reader.readAsDataURL(file);
       });
@@ -59,9 +62,28 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
   };
 
   const removeReference = (category: RefCategory, index: number) => {
-    if (category === 'face') setFaceRefs(prev => prev.filter((_, i) => i !== index));
+    if (category === 'face') {
+      setFaceRefs(prev => prev.filter((_, i) => i !== index));
+      setCharacterDNA(null);
+    }
     else if (category === 'style') setStyleRefs(prev => prev.filter((_, i) => i !== index));
     else if (category === 'scene') setSceneRefs(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAnalyzeDNA = async () => {
+    if (faceRefs.length === 0 || isAnalyzing) return;
+    setIsAnalyzing(true);
+    setStatusMessage('Decoding Biometric DNA...');
+    try {
+      const dna = await analyzeCharacterDNA(faceRefs);
+      setCharacterDNA(dna);
+    } catch (err) {
+      console.error(err);
+      alert("DNA Analysis failed. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+      setStatusMessage('');
+    }
   };
 
   const triggerUpload = (category: RefCategory) => {
@@ -87,8 +109,6 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
   };
 
   const startGeneration = async () => {
-    // If we have an environment key, we proceed directly.
-    // If not, we try to open the AI Studio key selector.
     if (!credits.apiKeySet) {
       if (window.aistudio?.openSelectKey) {
         if (confirm("Gemini 3 Pro Vision requires a personal API Key for image generation. Would you like to select yours now?")) {
@@ -118,11 +138,11 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
     }
 
     setIsGenerating(true);
-    setStatusMessage('Syncing characters and environments...');
+    setStatusMessage('Syncing character and environment synergy...');
     
     try {
       const allRefs = [...faceRefs, ...styleRefs, ...sceneRefs];
-      const images = await generateBatchImages(masterPrompt, allRefs, batchSize, selectedRatio);
+      const images = await generateBatchImages(masterPrompt, allRefs, batchSize, selectedRatio, characterDNA || undefined);
       onGenerate(images);
       setMasterPrompt('');
     } catch (err) {
@@ -147,7 +167,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
        return;
     }
 
-    if (confirm("Regenerating this shot uses 1 credit. Facial likeness and clothing will persist. Proceed?")) {
+    if (confirm("Regenerating this shot uses 1 credit. Character likeness will persist. Proceed?")) {
       setRegeneratingId(img.id);
       try {
         const refParts = (img.originalRefs || []).map(ref => ({
@@ -156,7 +176,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
             mimeType: "image/png"
           }
         }));
-        const newImg = await generateSingleImage(img.prompt, "CHARACTER OUTFIT PERSISTENCE", refParts, img.aspectRatio || "3:4", 0, 1);
+        const newImg = await generateSingleImage(img.prompt, "CHARACTER OUTFIT PERSISTENCE", refParts, img.aspectRatio || "3:4", 0, 1, characterDNA || undefined);
         onUpdateImage(img.id, { ...newImg, originalRefs: img.originalRefs });
       } catch (err) {
         alert("Regeneration failed.");
@@ -188,7 +208,22 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
     <div className="space-y-2">
       <div className="flex justify-between items-center">
         <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</label>
-        <span className="text-[10px] text-blue-500 font-bold">{currentRefs.length}/15</span>
+        <div className="flex items-center gap-2">
+          {category === 'face' && currentRefs.length > 0 && (
+            <button 
+              onClick={handleAnalyzeDNA}
+              disabled={isAnalyzing || !!characterDNA}
+              className={`text-[8px] font-black uppercase px-2 py-0.5 rounded border transition-all ${
+                characterDNA 
+                ? 'bg-green-500/10 border-green-500/30 text-green-400' 
+                : 'bg-blue-600/10 border-blue-500/30 text-blue-400 hover:bg-blue-600/20'
+              }`}
+            >
+              {isAnalyzing ? 'Analyzing...' : characterDNA ? 'Identity Locked' : 'Lock Identity'}
+            </button>
+          )}
+          <span className="text-[10px] text-blue-500 font-bold">{currentRefs.length}/15</span>
+        </div>
       </div>
       <div 
         onClick={() => triggerUpload(category)}
@@ -222,12 +257,20 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
           </div>
         )}
       </div>
+      {category === 'face' && characterDNA && (
+        <div className="p-2 bg-slate-900 border border-slate-700 rounded-lg animate-in slide-in-from-top-2">
+          <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mb-1 italic">Extracted Biometrics:</p>
+          <p className="text-[9px] text-blue-400 font-medium line-clamp-2 italic leading-tight">
+            "{characterDNA}"
+          </p>
+        </div>
+      )}
     </div>
   );
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      {/* Lightbox Modal (Blown Up View) */}
+      {/* Lightbox Modal */}
       {zoomedImage && (
         <div className="fixed inset-0 z-[100] bg-slate-950/98 backdrop-blur-3xl flex flex-col items-center justify-center p-8 animate-in fade-in duration-300" onClick={() => setZoomedImage(null)}>
           <div className="absolute top-8 right-8 flex gap-4">
@@ -289,14 +332,14 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
               {user.isDriveConnected ? 'Drive Linked' : 'Link Drive'}
             </button>
             <div className="flex items-center gap-3 bg-slate-900 px-4 py-2 rounded-2xl border border-slate-700">
-              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Biometric Lock</span>
+              <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Biometric Link</span>
               <div className="w-32 h-2 bg-slate-800 rounded-full overflow-hidden shadow-inner">
                   <div 
-                    className="h-full bg-blue-600 transition-all duration-700 ease-out shadow-[0_0_15px_rgba(37,99,235,0.5)]" 
+                    className={`h-full transition-all duration-700 ease-out ${characterDNA ? 'bg-green-500 shadow-[0_0_15px_rgba(34,197,94,0.5)]' : 'bg-blue-600 shadow-[0_0_15px_rgba(37,99,235,0.5)]'}`} 
                     style={{ width: `${(totalRefs / 15) * 100}%` }}
                   ></div>
               </div>
-              <span className="text-[10px] font-black text-blue-500">{totalRefs}/15</span>
+              <span className={`text-[10px] font-black ${characterDNA ? 'text-green-500' : 'text-blue-500'}`}>{totalRefs}/15</span>
             </div>
           </div>
         </div>
@@ -344,7 +387,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
           <div className="lg:col-span-8 space-y-8">
             <div className="relative">
               <div className="flex justify-between items-center mb-3">
-                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Master Directive</label>
+                <label className="block text-xs font-black text-slate-400 uppercase tracking-widest">Master Directive (Aesthetic & Vibe)</label>
                 <button 
                   onClick={handleEnhance}
                   disabled={!masterPrompt || isEnhancing}
@@ -428,7 +471,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
                   Shot {gallery.length - idx}
                 </div>
 
-                {/* Top Overlay Buttons - Explicitly Interactive */}
+                {/* Top Overlay Buttons */}
                 <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0 z-30 pointer-events-none">
                     <button 
                       onClick={(e) => { e.stopPropagation(); handleSaveToDrive(img.id); }}
@@ -453,7 +496,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
                     </button>
                 </div>
                 
-                {/* Bottom Overlay Actions - Explicitly Interactive */}
+                {/* Bottom Overlay Actions */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 p-6 flex flex-col justify-end gap-4 pointer-events-none z-20">
                     <div className="grid grid-cols-2 gap-3 pointer-events-auto">
                       <button 
