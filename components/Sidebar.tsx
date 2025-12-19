@@ -20,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, use
   ];
 
   const getSubLabel = () => {
+    if (credits.creditsRemaining > 500) return 'Studio Owner';
     if (credits.subscriptionLevel === 'pro') return 'Pro Member';
     if (credits.subscriptionLevel === 'basic') return 'Basic Member';
     return 'Free Tier';
@@ -36,10 +37,10 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, use
 
       <div className="p-4 border-b border-slate-700/50">
         <div className="flex items-center gap-3 p-2 rounded-xl bg-slate-900/50 border border-slate-700/50">
-          <img src={user.avatar} className="w-10 h-10 rounded-lg bg-slate-800" alt="User" />
+          <img src={user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`} className="w-10 h-10 rounded-lg bg-slate-800" alt="User" />
           <div className="overflow-hidden text-left">
-            <p className="text-xs font-bold text-white truncate">{user.name}</p>
-            <p className="text-[10px] text-slate-500 truncate uppercase font-black tracking-tighter">{getSubLabel()}</p>
+            <p className="text-xs font-bold text-white truncate">{user.name || 'Anonymous Creator'}</p>
+            <p className="text-[10px] text-blue-500 truncate uppercase font-black tracking-tighter">{getSubLabel()}</p>
           </div>
         </div>
       </div>
@@ -73,19 +74,23 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, use
           <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">Credits Terminal</p>
           <div className="space-y-2">
             <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-bold uppercase tracking-tighter">Trial</span>
-              <span className="text-white font-black">{credits.freeGenerationsRemaining}</span>
+              <span className="text-slate-500 font-bold uppercase tracking-tighter">Availability</span>
+              <span className="text-white font-black">
+                {credits.creditsRemaining > 500 ? 'UNLIMITED' : credits.freeGenerationsRemaining > 0 ? `${credits.freeGenerationsRemaining} Trial` : 'Refill Required'}
+              </span>
             </div>
-            <div className="flex justify-between items-center text-xs">
-              <span className="text-slate-500 font-bold uppercase tracking-tighter">Balance</span>
-              <span className="text-blue-500 font-black">{credits.creditsRemaining}</span>
-            </div>
+            {credits.creditsRemaining < 500 && (
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-slate-500 font-bold uppercase tracking-tighter">Balance</span>
+                <span className="text-blue-500 font-black">{credits.creditsRemaining}</span>
+              </div>
+            )}
           </div>
           <button 
             onClick={onOpenBilling}
             className="w-full mt-4 py-2.5 px-3 bg-slate-800 hover:bg-slate-750 border border-slate-700 rounded-xl text-[10px] font-black uppercase text-white tracking-widest transition-all"
           >
-            Refill Engine
+            {credits.creditsRemaining > 500 ? 'Billing Portal' : 'Refill Engine'}
           </button>
         </div>
       </div>

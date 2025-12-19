@@ -51,3 +51,18 @@ export interface AppConfig {
 
 export type BatchSize = 3 | 5 | 8 | 10;
 export type AppTab = 'studio' | 'branding' | 'distribution' | 'landing' | 'features' | 'settings' | 'motion';
+
+// Defined AIStudio interface to match the environment's expected type for window.aistudio
+export interface AIStudio {
+  hasSelectedApiKey: () => Promise<boolean>;
+  openSelectKey: () => Promise<void>;
+}
+
+// Add global type definitions for window.google and window.aistudio to fix TS property access errors
+declare global {
+  interface Window {
+    google: any;
+    // Updated aistudio to match the expected AIStudio type and optional modifier from the global context
+    aistudio?: AIStudio;
+  }
+}

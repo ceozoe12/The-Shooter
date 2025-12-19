@@ -17,19 +17,26 @@ const App: React.FC = () => {
   const [gallery, setGallery] = useState<GeneratedImage[]>([]);
   const [showBilling, setShowBilling] = useState(false);
   
-  const [user, setUser] = useState<User>({
-    name: '',
-    email: '',
-    avatar: '',
-    isLoggedIn: false,
-    isDriveConnected: false
+  // Persistence Loading
+  const [user, setUser] = useState<User>(() => {
+    const saved = localStorage.getItem('shooter_user');
+    return saved ? JSON.parse(saved) : {
+      name: '',
+      email: '',
+      avatar: '',
+      isLoggedIn: false,
+      isDriveConnected: false
+    };
   });
 
-  const [credits, setCredits] = useState<CreditState>({
-    freeGenerationsRemaining: FREE_LIMIT,
-    subscriptionLevel: 'none',
-    creditsRemaining: 0,
-    apiKeySet: false
+  const [credits, setCredits] = useState<CreditState>(() => {
+    const saved = localStorage.getItem('shooter_credits');
+    return saved ? JSON.parse(saved) : {
+      freeGenerationsRemaining: FREE_LIMIT,
+      subscriptionLevel: 'none',
+      creditsRemaining: 0,
+      apiKeySet: false
+    };
   });
 
   const [config, setConfig] = useState<AppConfig>({
@@ -39,9 +46,17 @@ const App: React.FC = () => {
     blotatoAccounts: []
   });
 
+  // Save State Changes
+  useEffect(() => {
+    localStorage.setItem('shooter_user', JSON.stringify(user));
+  }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem('shooter_credits', JSON.stringify(credits));
+  }, [credits]);
+
   useEffect(() => {
     const checkApiKey = async () => {
-      // Check if API key is provided via environment (Vercel) or Native AI Studio
       const envKeyExists = !!process.env.API_KEY;
       let studioKeyExists = false;
       
@@ -50,11 +65,14 @@ const App: React.FC = () => {
       }
       
       const hasKey = envKeyExists || studioKeyExists;
+      
       setCredits(prev => ({ 
         ...prev, 
         apiKeySet: hasKey,
-        // If an environment key is present, we grant initial credits for a "Full" experience
-        creditsRemaining: envKeyExists ? 999 : prev.creditsRemaining 
+        // IF API_KEY is set in Vercel, grant UNLIMITED status
+        subscriptionLevel: envKeyExists ? 'pro' : prev.subscriptionLevel,
+        creditsRemaining: envKeyExists ? 9999 : prev.creditsRemaining,
+        freeGenerationsRemaining: envKeyExists ? 0 : prev.freeGenerationsRemaining
       }));
     };
     checkApiKey();
@@ -62,7 +80,7 @@ const App: React.FC = () => {
 
   const handleStart = () => {
     if (!user.isLoggedIn) {
-      alert("Please sign in to access the Production Studio.");
+      setActiveTab('landing');
       return;
     }
     setActiveTab('studio');
@@ -72,7 +90,7 @@ const App: React.FC = () => {
     setUser({
       name: mockUser.name || 'AI Creator',
       email: mockUser.email || 'creator@theshooter.pro',
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockUser.name || 'AI'}`,
+      avatar: mockUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${mockUser.name || 'AI'}`,
       isLoggedIn: true,
       isDriveConnected: false
     });
@@ -92,10 +110,14 @@ const App: React.FC = () => {
   const handleGenerate = (newImages: GeneratedImage[]) => {
     setGallery(prev => [...newImages, ...prev]);
     
+    // Don't deduct from owners (9999 credits)
+    if (credits.creditsRemaining > 500) return;
+
     setCredits(prev => {
       const count = newImages.length;
       if (prev.freeGenerationsRemaining > 0) {
-        return { ...prev, freeGenerationsRemaining: 0 };
+        const remaining = Math.max(0, prev.freeGenerationsRemaining - count);
+        return { ...prev, freeGenerationsRemaining: remaining };
       }
       return { ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - count) };
     });
@@ -105,9 +127,9 @@ const App: React.FC = () => {
     setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
     if (selectedImage?.id === oldId) setSelectedImage(newImage);
     
-    setCredits(prev => {
-      return { ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - 1) };
-    });
+    if (credits.creditsRemaining > 500) return;
+
+    setCredits(prev => ({ ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - 1) }));
   };
 
   const navigateToBranding = (img: GeneratedImage) => {

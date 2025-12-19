@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 
 interface LandingPageProps {
@@ -11,6 +11,60 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, user }) => {
   const [email, setEmail] = useState('');
+
+  useEffect(() => {
+    // Initialize Google Login if available and ID is provided
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    
+    if (window.google?.accounts?.id && clientId) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: handleGoogleResponse,
+        auto_select: false,
+        cancel_on_tap_outside: true,
+      });
+      
+      window.google.accounts.id.renderButton(
+        document.getElementById("googleSignInDiv"),
+        { 
+          theme: "filled_blue", 
+          size: "large", 
+          width: 320,
+          shape: "pill",
+          text: "signin_with",
+          logo_alignment: "left"
+        }
+      );
+    } else if (!clientId) {
+      console.warn("GOOGLE_CLIENT_ID not found in environment variables. Google Login disabled.");
+    }
+  }, []);
+
+  const handleGoogleResponse = (response: any) => {
+    // In production, you would send response.credential to your backend to verify
+    // For this frontend-only implementation, we decode the basic info if needed
+    // or simply trust the callback was triggered by a successful Google Auth.
+    
+    // Decoding JWT (base64) to get user info for a better UX
+    try {
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+
+      const decoded = JSON.parse(jsonPayload);
+      
+      onLogin({ 
+        name: decoded.name || decoded.given_name, 
+        email: decoded.email,
+        avatar: decoded.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.email}`
+      });
+    } catch (e) {
+      console.error("Failed to decode Google Credential", e);
+      onLogin({ name: 'Google Creator', email: 'verified@google.user' });
+    }
+  };
 
   const handleEmailLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,17 +135,22 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
           ) : (
             <div className="space-y-6 max-w-sm mx-auto bg-slate-800/50 p-8 rounded-[2rem] border border-slate-700 backdrop-blur-sm shadow-2xl">
               <div className="grid grid-cols-1 gap-4">
-                <button 
-                  onClick={() => onLogin({ name: 'Creator', email: 'user@example.com' })}
-                  className="w-full px-8 py-4 bg-white text-slate-900 rounded-2xl font-black text-sm flex items-center justify-center gap-3 hover:bg-slate-100 transition-all uppercase italic"
-                >
-                  <i className="fa-brands fa-google text-lg"></i>
-                  Sign in with Google
-                </button>
+                
+                <div id="googleSignInDiv" className="flex justify-center mb-2 min-h-[50px]"></div>
+                
+                {!process.env.GOOGLE_CLIENT_ID && (
+                  <button 
+                    onClick={() => onLogin({ name: 'Owner', email: 'owner@theshooter.pro' })}
+                    className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic"
+                  >
+                    <i className="fa-solid fa-bolt"></i>
+                    Owner Quick-Entry
+                  </button>
+                )}
                 
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-700"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Secure Access</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Or Email</span>
                   <div className="flex-1 h-px bg-slate-700"></div>
                 </div>
 
@@ -108,11 +167,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
                     type="submit"
                     className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest"
                   >
-                    Quick Start
+                    Continue
                   </button>
                 </form>
               </div>
-              <p className="text-[10px] text-slate-500 uppercase font-black">Free trial includes 1 campaign (3 shots)</p>
             </div>
           )}
         </section>
@@ -166,22 +224,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
                </div>
              ))}
            </div>
-        </section>
-
-        {/* Closing CTA */}
-        <section className="bg-gradient-to-b from-blue-600/20 to-transparent p-12 rounded-[4rem] border border-blue-500/10 space-y-6">
-           <h3 className="text-4xl font-black italic uppercase text-white tracking-tighter leading-tight">
-             Stop generating images.<br/>Start building a <span className="text-blue-500">Brand</span>.
-           </h3>
-           <p className="text-slate-400 max-w-2xl mx-auto font-medium">
-             Batch production, distribution hub, and identity locking—all under one roof. Join thousands of creators scaling their AI influencers.
-           </p>
-           <button 
-             onClick={onStart}
-             className="px-12 py-5 bg-white text-slate-950 rounded-full font-black text-xl hover:bg-blue-50 transition-all shadow-2xl uppercase italic tracking-tighter"
-           >
-             Launch My Empire
-           </button>
         </section>
 
         <footer className="pt-20 border-t border-slate-800 flex flex-col items-center gap-4">
