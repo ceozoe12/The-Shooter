@@ -1,0 +1,7 @@
+{
+  "name": "The Shooter",
+  "description": "An end-to-end AI Influencer creation and management platform. Maintain facial consistency, generate themed batches, add branding, and schedule posts across social media via Blotato.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
