@@ -87,6 +87,8 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
   };
 
   const startGeneration = async () => {
+    // If we have an environment key, we proceed directly.
+    // If not, we try to open the AI Studio key selector.
     if (!credits.apiKeySet) {
       if (window.aistudio?.openSelectKey) {
         if (confirm("Gemini 3 Pro Vision requires a personal API Key for image generation. Would you like to select yours now?")) {
@@ -95,7 +97,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
           return;
         }
       } else {
-        alert("Please configure your API Key in the System Admin or Billing section to start generation.");
+        alert("Please configure your API Key in System Admin to start production.");
         return;
       }
     }
@@ -125,7 +127,7 @@ const GenerationStudio: React.FC<GenerationStudioProps> = ({
       setMasterPrompt('');
     } catch (err) {
       console.error(err);
-      alert("Generation failed. Please verify your API key selection and credits.");
+      alert("Generation failed. Please verify your API key and network connection.");
     } finally {
       setIsGenerating(false);
       setStatusMessage('');

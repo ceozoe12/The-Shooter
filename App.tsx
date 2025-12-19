@@ -26,7 +26,7 @@ const App: React.FC = () => {
   });
 
   const [credits, setCredits] = useState<CreditState>({
-    freeGenerationsRemaining: FREE_LIMIT, // Starts at 3
+    freeGenerationsRemaining: FREE_LIMIT,
     subscriptionLevel: 'none',
     creditsRemaining: 0,
     apiKeySet: false
@@ -41,10 +41,21 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkApiKey = async () => {
+      // Check if API key is provided via environment (Vercel) or Native AI Studio
+      const envKeyExists = !!process.env.API_KEY;
+      let studioKeyExists = false;
+      
       if (window.aistudio?.hasSelectedApiKey) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setCredits(prev => ({ ...prev, apiKeySet: hasKey }));
+        studioKeyExists = await window.aistudio.hasSelectedApiKey();
       }
+      
+      const hasKey = envKeyExists || studioKeyExists;
+      setCredits(prev => ({ 
+        ...prev, 
+        apiKeySet: hasKey,
+        // If an environment key is present, we grant initial credits for a "Full" experience
+        creditsRemaining: envKeyExists ? 999 : prev.creditsRemaining 
+      }));
     };
     checkApiKey();
   }, []);
@@ -83,7 +94,6 @@ const App: React.FC = () => {
     
     setCredits(prev => {
       const count = newImages.length;
-      // Strict Free Trial: After first use of 3, no more free generations.
       if (prev.freeGenerationsRemaining > 0) {
         return { ...prev, freeGenerationsRemaining: 0 };
       }
