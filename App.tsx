@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import GenerationStudio from './components/GenerationStudio';
@@ -6,6 +7,8 @@ import Scheduler from './components/Scheduler';
 import BillingModal from './components/BillingModal';
 import LandingPage from './components/LandingPage';
 import FeaturesPage from './components/FeaturesPage';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import TermsOfService from './components/TermsOfService';
 import Settings from './components/Settings';
 import { CreditState, GeneratedImage, AppTab, SubscriptionLevel, User, AppConfig } from './types';
 import { FREE_LIMIT } from './constants';
@@ -39,7 +42,7 @@ const App: React.FC = () => {
   });
 
   const [config, setConfig] = useState<AppConfig>({
-    stripePublicKey: '',
+    stripePublicKey: 'mk_1Sfx5p0Z7icb3eU0ZY5FTKGm', // Live Key as per user instruction
     canvaApiKey: '',
     blotatoApiKey: '',
     blotatoAccounts: []
@@ -57,7 +60,6 @@ const App: React.FC = () => {
   // Handle Owner Mode Activation
   useEffect(() => {
     const checkApiKey = async () => {
-      // Safer check for process.env to avoid ReferenceError
       const envKeyExists = typeof process !== 'undefined' && !!process.env.API_KEY;
       let studioKeyExists = false;
       
@@ -66,21 +68,18 @@ const App: React.FC = () => {
       }
       
       const hasKey = envKeyExists || studioKeyExists;
-      
-      // Determine if current logged in user is the Admin/Owner
       const isAdmin = user.email === 'owner@theshooter.pro';
 
       setCredits(prev => ({ 
         ...prev, 
         apiKeySet: hasKey,
-        // Only grant unlimited credits if it's the ADMIN user
         subscriptionLevel: isAdmin ? 'pro' : prev.subscriptionLevel,
         creditsRemaining: isAdmin ? 9999 : prev.creditsRemaining,
         freeGenerationsRemaining: isAdmin ? 0 : prev.freeGenerationsRemaining
       }));
     };
     checkApiKey();
-  }, [user.email]); // Re-run when user logs in/out to update permissions
+  }, [user.email]);
 
   const handleStart = () => {
     if (!user.isLoggedIn) {
@@ -113,10 +112,7 @@ const App: React.FC = () => {
 
   const handleGenerate = (newImages: GeneratedImage[]) => {
     setGallery(prev => [...newImages, ...prev]);
-    
-    // Don't deduct from owners
     if (credits.creditsRemaining > 9000) return;
-
     setCredits(prev => {
       const count = newImages.length;
       if (prev.freeGenerationsRemaining > 0) {
@@ -130,9 +126,7 @@ const App: React.FC = () => {
   const handleUpdateImage = (oldId: string, newImage: GeneratedImage) => {
     setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
     if (selectedImage?.id === oldId) setSelectedImage(newImage);
-    
     if (credits.creditsRemaining > 9000) return;
-
     setCredits(prev => ({ ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - 1) }));
   };
 
@@ -147,11 +141,28 @@ const App: React.FC = () => {
   };
 
   if (activeTab === 'landing') {
-    return <LandingPage onStart={handleStart} onExplore={handleShowFeatures} onLogin={handleLogin} user={user} />;
+    return (
+      <LandingPage 
+        onStart={handleStart} 
+        onExplore={handleShowFeatures} 
+        onLogin={handleLogin} 
+        user={user} 
+        onViewPrivacy={() => setActiveTab('privacy')}
+        onViewTerms={() => setActiveTab('terms')}
+      />
+    );
   }
 
   if (activeTab === 'features') {
     return <FeaturesPage onBack={handleBackToLanding} onStart={handleStart} />;
+  }
+
+  if (activeTab === 'privacy') {
+    return <PrivacyPolicy onBack={() => setActiveTab(user.isLoggedIn ? 'studio' : 'landing')} />;
+  }
+
+  if (activeTab === 'terms') {
+    return <TermsOfService onBack={() => setActiveTab(user.isLoggedIn ? 'studio' : 'landing')} />;
   }
 
   return (
@@ -219,30 +230,7 @@ const App: React.FC = () => {
                 <p className="text-slate-400 max-w-xl mx-auto text-lg italic leading-relaxed">
                   Transform your consistent production shots into viral short-form video content. One-click Reels, TikToks, and Shorts generation for your AI Influencer.
                 </p>
-                <div className="mt-12 flex items-center gap-6">
-                   <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700">
-                        <i className="fa-solid fa-film text-slate-500"></i>
-                      </div>
-                      <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Lip Sync</span>
-                   </div>
-                   <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700">
-                        <i className="fa-solid fa-person-walking text-slate-500"></i>
-                      </div>
-                      <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Pose Direct</span>
-                   </div>
-                   <div className="flex flex-col items-center gap-2">
-                      <div className="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700">
-                        <i className="fa-solid fa-music text-slate-500"></i>
-                      </div>
-                      <span className="text-[8px] font-black uppercase text-slate-500 tracking-widest">Auto Sync</span>
-                   </div>
-                </div>
-                <button 
-                  onClick={() => setActiveTab('studio')}
-                  className="mt-12 px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-black uppercase text-sm transition-all italic tracking-widest"
-                >
+                <button onClick={() => setActiveTab('studio')} className="mt-12 px-8 py-4 bg-slate-700 hover:bg-slate-600 text-white rounded-2xl font-black uppercase text-sm transition-all italic tracking-widest">
                   Back to Production
                 </button>
              </div>

@@ -7,6 +7,8 @@ interface FeaturesPageProps {
 }
 
 const FeaturesPage: React.FC<FeaturesPageProps> = ({ onBack, onStart }) => {
+  const currentYear = new Date().getFullYear();
+
   const detailedFeatures = [
     {
       icon: 'fa-dna',
@@ -108,7 +110,7 @@ const FeaturesPage: React.FC<FeaturesPageProps> = ({ onBack, onStart }) => {
         </section>
 
         <footer className="text-center pt-8 border-t border-slate-800">
-           <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.4em]">The Shooter &copy; 2024</p>
+           <p className="text-slate-600 text-[10px] font-bold uppercase tracking-[0.4em]">The Shooter &copy; {currentYear}</p>
         </footer>
       </div>
     </div>

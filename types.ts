@@ -1,6 +1,4 @@
 
-
-
 export interface GeneratedImage {
   id: string;
   url: string;
@@ -52,11 +50,9 @@ export interface AppConfig {
 }
 
 export type BatchSize = 3 | 5 | 8 | 10;
-export type AppTab = 'studio' | 'branding' | 'distribution' | 'landing' | 'features' | 'settings' | 'motion';
+export type AppTab = 'studio' | 'branding' | 'distribution' | 'landing' | 'features' | 'settings' | 'motion' | 'privacy' | 'terms';
 
 // Add global type definitions for window.google to fix TS property access errors.
-// window.aistudio and its types are already provided by the environment's ambient declarations.
-// Removing the local re-declaration of 'aistudio' on the Window interface to resolve modifier and type mismatch errors.
 declare global {
   interface Window {
     google: any;

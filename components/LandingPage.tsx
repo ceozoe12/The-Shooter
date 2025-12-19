@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 
@@ -6,13 +7,17 @@ interface LandingPageProps {
   onExplore: () => void;
   onLogin: (user: Partial<User>) => void;
   user: User;
+  onViewPrivacy: () => void;
+  onViewTerms: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, user }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, user, onViewPrivacy, onViewTerms }) => {
   const [email, setEmail] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
@@ -67,7 +72,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
 
   const handleAdminVerify = (e: React.FormEvent) => {
     e.preventDefault();
-    // Using the established secure admin password
     if (adminPass === 'TheShooter12') {
       onLogin({ name: 'Owner', email: 'owner@theshooter.pro' });
       setShowAdminLogin(false);
@@ -103,7 +107,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
   ];
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center p-6 text-center relative overflow-x-hidden">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center p-6 text-center relative overflow-x-hidden selection:bg-blue-600 selection:text-white">
       <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
         <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600 rounded-full blur-[120px]"></div>
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600 rounded-full blur-[120px]"></div>
@@ -130,19 +134,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
               />
               {loginError && <p className="text-red-500 text-[10px] font-black uppercase text-center animate-pulse">{loginError}</p>}
               <div className="flex gap-3 pt-2">
-                <button 
-                  type="button"
-                  onClick={() => setShowAdminLogin(false)}
-                  className="flex-1 py-4 bg-slate-900 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-600/20 active:scale-95"
-                >
-                  Confirm
-                </button>
+                <button type="button" onClick={() => setShowAdminLogin(false)} className="flex-1 py-4 bg-slate-900 text-slate-400 rounded-2xl font-black uppercase tracking-widest text-xs border border-slate-700">Cancel</button>
+                <button type="submit" className="flex-1 py-4 bg-red-600 hover:bg-red-500 text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-600/20 active:scale-95">Confirm</button>
               </div>
             </form>
           </div>
@@ -164,58 +157,30 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
           
           {user.isLoggedIn ? (
             <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-              <button 
-                onClick={onStart}
-                className="w-full md:w-auto px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-xl transition-all transform hover:scale-105 shadow-2xl shadow-blue-600/30 uppercase italic"
-              >
-                Enter Studio
-              </button>
-              <button 
-                onClick={onExplore}
-                className="w-full md:w-auto px-10 py-5 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-black text-xl border border-slate-700 transition-all uppercase italic"
-              >
-                The Tech
-              </button>
+              <button onClick={onStart} className="w-full md:w-auto px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-black text-xl transition-all transform hover:scale-105 shadow-2xl shadow-blue-600/30 uppercase italic">Enter Studio</button>
+              <button onClick={onExplore} className="w-full md:w-auto px-10 py-5 bg-slate-800 hover:bg-slate-700 text-white rounded-full font-black text-xl border border-slate-700 transition-all uppercase italic">The Tech</button>
             </div>
           ) : (
             <div className="space-y-6 max-w-sm mx-auto bg-slate-800/50 p-8 rounded-[2rem] border border-slate-700 backdrop-blur-sm shadow-2xl">
               <div className="grid grid-cols-1 gap-4">
-                
                 <div id="googleSignInDiv" className="flex justify-center mb-2 min-h-[50px]"></div>
-
                 {isViteEnvMissing && (
-                  <button 
-                    onClick={() => setShowAdminLogin(true)}
-                    className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic"
-                  >
+                  <button onClick={() => setShowAdminLogin(true)} className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic">
                     <i className="fa-solid fa-bolt"></i>
                     Owner Quick-Entry
                   </button>
                 )}
-                
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-700"></div>
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Or Email</span>
                   <div className="flex-1 h-px bg-slate-700"></div>
                 </div>
-
                 <form onSubmit={handleEmailLogin} className="space-y-3">
-                  <input 
-                    type="email" 
-                    required
-                    placeholder="creator@theshooter.pro" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
-                  />
-                  <button 
-                    type="submit"
-                    className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest"
-                  >
-                    Continue
-                  </button>
+                  <input type="email" required placeholder="creator@theshooter.pro" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium" />
+                  <button type="submit" className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest">Continue</button>
                 </form>
               </div>
+              <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest italic">By continuing, you agree to our <button onClick={onViewTerms} className="text-blue-500 hover:underline">Terms</button> & <button onClick={onViewPrivacy} className="text-blue-500 hover:underline">Privacy</button>.</p>
             </div>
           )}
         </section>
@@ -271,11 +236,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
 
         <footer className="pt-20 border-t border-slate-800 flex flex-col items-center gap-4">
            <div className="flex gap-6 text-slate-500 text-sm font-bold uppercase tracking-widest">
-             <a href="#" className="hover:text-white transition-colors">Privacy</a>
-             <a href="#" className="hover:text-white transition-colors">Terms</a>
-             <a href="#" className="hover:text-white transition-colors">Support</a>
+             <button onClick={onViewPrivacy} className="hover:text-white transition-colors">Privacy</button>
+             <button onClick={onViewTerms} className="hover:text-white transition-colors">Terms</button>
+             <a href="mailto:support@theshooter.pro" className="hover:text-white transition-colors">Support</a>
            </div>
-           <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em]">The Shooter &copy; 2024 • Built with Gemini 3 Pro</p>
+           <p className="text-slate-600 text-[10px] font-black uppercase tracking-[0.4em]">The Shooter &copy; {currentYear} • Built with Gemini 3 Pro</p>
         </footer>
       </div>
     </div>
