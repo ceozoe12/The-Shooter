@@ -2,11 +2,19 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GeneratedImage, BatchSize } from "../types";
 
 /**
+ * Helper to get the most relevant API key
+ */
+function getActiveApiKey(): string {
+  const manual = localStorage.getItem('manual_gemini_api_key');
+  return manual || process.env.API_KEY || '';
+}
+
+/**
  * NEW: Analyzes reference images to create a persistent "Character DNA" profile.
  * This biometric description helps the model maintain consistency beyond just visual references.
  */
 export async function analyzeCharacterDNA(images: string[]): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: getActiveApiKey() });
   
   const parts = images.slice(0, 5).map(img => ({
     inlineData: {
@@ -32,7 +40,7 @@ export async function analyzeCharacterDNA(images: string[]): Promise<string> {
  * Stage 1: Generate a logical storyboard sequence with a persistent visual anchor.
  */
 async function generateStoryboard(masterPrompt: string, batchSize: BatchSize, characterDNA?: string): Promise<{ outfit: string, scenes: string[] }> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: getActiveApiKey() });
   
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -120,7 +128,7 @@ export async function generateSingleImage(
   total: number,
   characterDNA?: string
 ): Promise<GeneratedImage> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: getActiveApiKey() });
   
   const detailedPrompt = `
     AI INFLUENCER PRODUCTION - SHOT ${index + 1} of ${total}
@@ -192,7 +200,7 @@ export async function generateSingleImage(
  * Enhances a vague user prompt into a high-detail prompt with consistency cues.
  */
 export async function enhancePrompt(vaguePrompt: string): Promise<string> {
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: getActiveApiKey() });
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: `You are a prompt engineer for high-end AI fashion photography. 

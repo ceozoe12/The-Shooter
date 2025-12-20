@@ -58,17 +58,18 @@ const App: React.FC = () => {
     localStorage.setItem('shooter_credits', JSON.stringify(credits));
   }, [credits]);
 
-  // Handle Owner Mode Activation
+  // Handle Owner Mode Activation & API Key Detection
   useEffect(() => {
     const checkApiKey = async () => {
       const envKeyExists = typeof process !== 'undefined' && !!process.env.API_KEY;
+      const manualKeyExists = !!localStorage.getItem('manual_gemini_api_key');
       let studioKeyExists = false;
       
       if (window.aistudio?.hasSelectedApiKey) {
         studioKeyExists = await window.aistudio.hasSelectedApiKey();
       }
       
-      const hasKey = envKeyExists || studioKeyExists;
+      const hasKey = envKeyExists || studioKeyExists || manualKeyExists;
       const isAdmin = user.email === 'owner@theshooter.pro';
 
       setCredits(prev => ({ 
@@ -80,7 +81,7 @@ const App: React.FC = () => {
       }));
     };
     checkApiKey();
-  }, [user.email]);
+  }, [user.email, showBilling]); // Re-check when billing closes in case they saved a key
 
   const handleStart = () => {
     if (!user.isLoggedIn) {
@@ -105,6 +106,7 @@ const App: React.FC = () => {
     // Clear all persistence
     localStorage.removeItem('shooter_user');
     localStorage.removeItem('shooter_credits');
+    localStorage.removeItem('manual_gemini_api_key');
     
     // Reset states
     setUser({
