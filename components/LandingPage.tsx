@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { User } from '../types';
 
 interface LandingPageProps {
@@ -12,62 +11,25 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, user, onViewPrivacy, onViewTerms }) => {
+  const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminPass, setAdminPass] = useState('');
   const [loginError, setLoginError] = useState('');
 
   const currentYear = new Date().getFullYear();
 
-  useEffect(() => {
-    const clientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID || '47075610338-uqb0kr36c5olsoo7voc4ekh4nnfkqd5k.apps.googleusercontent.com';
-    
-    if (window.google?.accounts?.id && clientId) {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: handleGoogleResponse,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
-      
-      window.google.accounts.id.renderButton(
-        document.getElementById("googleSignInDiv"),
-        { 
-          theme: "filled_blue", 
-          size: "large", 
-          width: 320,
-          shape: "pill",
-          text: "signin_with",
-          logo_alignment: "left"
-        }
-      );
-    }
-  }, []);
-
-  const handleGoogleResponse = (response: any) => {
-    try {
-      const base64Url = response.credential.split('.')[1];
-      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-      }).join(''));
-
-      const decoded = JSON.parse(jsonPayload);
-      
-      onLogin({ 
-        name: decoded.name || decoded.given_name, 
-        email: decoded.email,
-        avatar: decoded.picture || `https://api.dicebear.com/7.x/avataaars/svg?seed=${decoded.email}`
-      });
-    } catch (e) {
-      console.error("Failed to decode Google Credential", e);
-      onLogin({ name: 'Google Creator', email: 'verified@google.user' });
-    }
-  };
-
-  const handleEmailLogin = (e: React.FormEvent) => {
+  const handleAuthSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin({ name: email.split('@')[0], email });
+    if (!email || !password) return;
+    
+    // In a real app, you would validate the password/account here
+    onLogin({ 
+      name: email.split('@')[0], 
+      email: email,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+    });
   };
 
   const handleAdminVerify = (e: React.FormEvent) => {
@@ -163,22 +125,58 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
           ) : (
             <div className="space-y-6 max-w-sm mx-auto bg-slate-800/50 p-8 rounded-[2rem] border border-slate-700 backdrop-blur-sm shadow-2xl">
               <div className="grid grid-cols-1 gap-4">
-                <div id="googleSignInDiv" className="flex justify-center mb-2 min-h-[50px]"></div>
-                {isViteEnvMissing && (
-                  <button onClick={() => setShowAdminLogin(true)} className="w-full px-8 py-3 bg-slate-900 text-slate-400 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic">
-                    <i className="fa-solid fa-bolt"></i>
-                    Owner Quick-Entry
+                <div className="flex bg-slate-900 p-1 rounded-xl border border-slate-700 mb-2">
+                  <button 
+                    onClick={() => setIsSignUp(false)}
+                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${!isSignUp ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Login
                   </button>
-                )}
+                  <button 
+                    onClick={() => setIsSignUp(true)}
+                    className={`flex-1 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${isSignUp ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    Sign Up
+                  </button>
+                </div>
+
+                <form onSubmit={handleAuthSubmit} className="space-y-3">
+                  <div className="space-y-2">
+                    <input 
+                      type="email" 
+                      required 
+                      placeholder="Username (Email)" 
+                      value={email} 
+                      onChange={(e) => setEmail(e.target.value)} 
+                      className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm" 
+                    />
+                    <input 
+                      type="password" 
+                      required 
+                      placeholder="Password" 
+                      value={password} 
+                      onChange={(e) => setPassword(e.target.value)} 
+                      className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm" 
+                    />
+                  </div>
+                  <button 
+                    type="submit" 
+                    className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest shadow-xl shadow-blue-900/20 active:scale-95"
+                  >
+                    {isSignUp ? 'Create Studio' : 'Resume Session'}
+                  </button>
+                </form>
+
                 <div className="flex items-center gap-4 py-2">
                   <div className="flex-1 h-px bg-slate-700"></div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Or Email</span>
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Management</span>
                   <div className="flex-1 h-px bg-slate-700"></div>
                 </div>
-                <form onSubmit={handleEmailLogin} className="space-y-3">
-                  <input type="email" required placeholder="creator@theshooter.pro" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium" />
-                  <button type="submit" className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest">Continue</button>
-                </form>
+
+                <button onClick={() => setShowAdminLogin(true)} className="w-full px-8 py-3 bg-slate-900 text-slate-500 border border-slate-700 rounded-2xl font-black text-[10px] flex items-center justify-center gap-3 hover:text-white transition-all uppercase italic">
+                  <i className="fa-solid fa-bolt"></i>
+                  Owner Access
+                </button>
               </div>
               <p className="text-[9px] text-slate-600 font-bold uppercase tracking-widest italic">By continuing, you agree to our <button onClick={onViewTerms} className="text-blue-500 hover:underline">Terms</button> & <button onClick={onViewPrivacy} className="text-blue-500 hover:underline">Privacy</button>.</p>
             </div>

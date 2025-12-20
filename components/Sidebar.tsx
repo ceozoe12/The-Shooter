@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { CreditState, AppTab, User } from '../types';
 
@@ -8,9 +7,10 @@ interface SidebarProps {
   credits: CreditState;
   user: User;
   onOpenBilling: () => void;
+  onLogout: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, user, onOpenBilling }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, user, onOpenBilling, onLogout }) => {
   const navItems: { id: AppTab; label: string; icon: string; badge?: string }[] = [
     { id: 'studio', label: 'Production Studio', icon: 'fa-wand-magic-sparkles' },
     { id: 'branding', label: 'Brand Studio', icon: 'fa-palette' },
@@ -67,6 +67,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab, credits, use
             )}
           </button>
         ))}
+
+        <div className="pt-4 mt-4 border-t border-slate-700/50">
+          <button
+            onClick={onLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-red-600/10 hover:text-red-500 transition-all"
+          >
+            <i className="fa-solid fa-right-from-bracket w-5"></i>
+            <span className="font-bold text-xs uppercase italic tracking-tighter">Exit Studio</span>
+          </button>
+        </div>
       </nav>
 
       <div className="p-4 mt-auto space-y-4">

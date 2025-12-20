@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import GenerationStudio from './components/GenerationStudio';
@@ -50,7 +49,9 @@ const App: React.FC = () => {
 
   // Save State Changes
   useEffect(() => {
-    localStorage.setItem('shooter_user', JSON.stringify(user));
+    if (user.isLoggedIn) {
+      localStorage.setItem('shooter_user', JSON.stringify(user));
+    }
   }, [user]);
 
   useEffect(() => {
@@ -98,6 +99,30 @@ const App: React.FC = () => {
       isDriveConnected: false
     });
     setActiveTab('studio');
+  };
+
+  const handleLogout = () => {
+    // Clear all persistence
+    localStorage.removeItem('shooter_user');
+    localStorage.removeItem('shooter_credits');
+    
+    // Reset states
+    setUser({
+      name: '',
+      email: '',
+      avatar: '',
+      isLoggedIn: false,
+      isDriveConnected: false
+    });
+    setCredits({
+      freeGenerationsRemaining: FREE_LIMIT,
+      subscriptionLevel: 'none',
+      creditsRemaining: 0,
+      apiKeySet: false
+    });
+    setGallery([]);
+    setSelectedImage(null);
+    setActiveTab('landing');
   };
 
   const toggleDrive = () => {
@@ -173,6 +198,7 @@ const App: React.FC = () => {
         credits={credits}
         user={user}
         onOpenBilling={() => setShowBilling(true)}
+        onLogout={handleLogout}
       />
       
       <main className="flex-1 overflow-y-auto p-8 bg-slate-950">

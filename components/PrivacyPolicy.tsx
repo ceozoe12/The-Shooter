@@ -29,16 +29,16 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
           <div className="space-y-4">
             <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">1. Overview</h2>
             <p>
-              The Shooter ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI Influencer production platform, including any integration with Google Services, Blotato, and Stripe.
+              The Shooter ("we," "us," or "our") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI Influencer production platform, including any integration with Google Gemini, Blotato, and Stripe.
             </p>
           </div>
 
           <div className="space-y-4">
             <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">2. Information We Collect</h2>
             <ul className="list-disc pl-6 space-y-2">
-              <li><strong>Google Account Data:</strong> When you use Google Sign-In, we collect your name, email address, and profile picture to create and manage your account.</li>
-              <li><strong>Media Assets:</strong> We collect images you upload as references and the images generated via our AI engine.</li>
-              <li><strong>User Content:</strong> We collect the text prompts and branding configurations you provide.</li>
+              <li><strong>Account Credentials:</strong> We collect your email address and a hashed version of your password to manage your secure access to the studio.</li>
+              <li><strong>Media Assets:</strong> We collect images you upload as references and the images generated via our AI engine to maintain your production history.</li>
+              <li><strong>User Content:</strong> We collect the text prompts and branding configurations you provide for session persistence.</li>
               <li><strong>Payment Information:</strong> Financial transactions are processed via Stripe. We do not store full credit card numbers on our servers.</li>
               <li><strong>Google Drive Data:</strong> If you opt-in to Google Drive sync, we request limited "per-file" access to save generated images to a specific folder ("TheShooter/Production"). We do not read your other Drive files.</li>
             </ul>
@@ -50,7 +50,7 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
             <ul className="list-disc pl-6 space-y-2">
               <li>Facilitate AI image generation via the Google Gemini API.</li>
               <li>Enable social media scheduling and distribution via Blotato.</li>
-              <li>Personalize your studio experience and manage subscription credits.</li>
+              <li>Personalize your studio experience and manage subscription credits across sessions.</li>
               <li>Ensure security and prevent fraudulent use of our services.</li>
             </ul>
           </div>
@@ -68,14 +68,14 @@ const PrivacyPolicy: React.FC<PrivacyPolicyProps> = ({ onBack }) => {
           <div className="space-y-4">
             <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">5. Data Retention & Deletion</h2>
             <p>
-              We retain your data for as long as your account is active. You may request the deletion of your account and all associated media assets at any time by contacting us at <strong>privacy@theshooter.pro</strong>. Local session data can be cleared by logging out or clearing your browser's local storage.
+              We retain your data for as long as your account is active. You may request the deletion of your account and all associated media assets at any time by contacting us at <strong>privacy@theshooter.pro</strong>. Logging out clears your active session, and a new session can be established via a fresh login.
             </p>
           </div>
 
           <div className="space-y-4">
             <h2 className="text-2xl font-black text-white italic uppercase tracking-tight">6. Security</h2>
             <p>
-              We implement industry-standard AES-256 encryption and secure OAuth2 protocols for all third-party integrations. While we strive to use commercially acceptable means to protect your Personal Information, no method of transmission over the Internet is 100% secure.
+              We implement industry-standard AES-256 encryption and secure OAuth2 protocols for all third-party integrations. Your password is never stored in plain text. While we strive to use commercially acceptable means to protect your Personal Information, no method of transmission over the Internet is 100% secure.
             </p>
           </div>
         </section>
