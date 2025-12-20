@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import GenerationStudio from './components/GenerationStudio';
@@ -9,8 +10,12 @@ import FeaturesPage from './components/FeaturesPage';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import TermsOfService from './components/TermsOfService';
 import Settings from './components/Settings';
-import { CreditState, GeneratedImage, AppTab, SubscriptionLevel, User, AppConfig } from './types';
+import { CreditState, GeneratedImage, AppTab, User, AppConfig } from './types';
 import { FREE_LIMIT } from './constants';
+
+// Firebase imports would normally go here
+// Note: As this is a frontend environment, we use the Firebase Client SDK.
+// We are simulating the Firebase Auth flow which handles the user session.
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('landing');
@@ -18,7 +23,6 @@ const App: React.FC = () => {
   const [gallery, setGallery] = useState<GeneratedImage[]>([]);
   const [showBilling, setShowBilling] = useState(false);
   
-  // Persistence Loading
   const [user, setUser] = useState<User>(() => {
     const saved = localStorage.getItem('shooter_user');
     return saved ? JSON.parse(saved) : {
@@ -41,16 +45,17 @@ const App: React.FC = () => {
   });
 
   const [config, setConfig] = useState<AppConfig>({
-    stripePublicKey: 'mk_1Sfx5p0Z7icb3eU0ZY5FTKGm', // Live Key as per user instruction
+    stripePublicKey: 'mk_1Sfx5p0Z7icb3eU0ZY5FTKGm',
     canvaApiKey: '',
     blotatoApiKey: '',
     blotatoAccounts: []
   });
 
-  // Save State Changes
   useEffect(() => {
     if (user.isLoggedIn) {
       localStorage.setItem('shooter_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('shooter_user');
     }
   }, [user]);
 
@@ -58,10 +63,8 @@ const App: React.FC = () => {
     localStorage.setItem('shooter_credits', JSON.stringify(credits));
   }, [credits]);
 
-  // Handle Owner Mode Activation & API Key Detection
   useEffect(() => {
     const checkApiKey = async () => {
-      const envKeyExists = typeof process !== 'undefined' && !!process.env.API_KEY;
       const manualKeyExists = !!localStorage.getItem('manual_gemini_api_key');
       let studioKeyExists = false;
       
@@ -69,7 +72,7 @@ const App: React.FC = () => {
         studioKeyExists = await window.aistudio.hasSelectedApiKey();
       }
       
-      const hasKey = envKeyExists || studioKeyExists || manualKeyExists;
+      const hasKey = !!process.env.API_KEY || studioKeyExists || manualKeyExists;
       const isAdmin = user.email === 'owner@theshooter.pro';
 
       setCredits(prev => ({ 
@@ -81,7 +84,30 @@ const App: React.FC = () => {
       }));
     };
     checkApiKey();
-  }, [user.email, showBilling]); // Re-check when billing closes in case they saved a key
+  }, [user.email, showBilling]);
+
+  // Fix: Added missing handleGenerate function to update gallery and credits
+  const handleGenerate = (newImages: GeneratedImage[]) => {
+    setGallery(prev => [...newImages, ...prev]);
+    setCredits(prev => {
+      if (prev.freeGenerationsRemaining > 0) {
+        return { ...prev, freeGenerationsRemaining: 0 };
+      }
+      return { 
+        ...prev, 
+        creditsRemaining: Math.max(0, prev.creditsRemaining - newImages.length) 
+      };
+    });
+  };
+
+  // Fix: Added missing handleUpdateImage function to update existing gallery items and handle regeneration costs
+  const handleUpdateImage = (oldId: string, newImage: GeneratedImage) => {
+    setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
+    setCredits(prev => ({
+      ...prev,
+      creditsRemaining: Math.max(0, prev.creditsRemaining - 1)
+    }));
+  };
 
   const handleStart = () => {
     if (!user.isLoggedIn) {
@@ -103,12 +129,10 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // Clear all persistence
     localStorage.removeItem('shooter_user');
     localStorage.removeItem('shooter_credits');
     localStorage.removeItem('manual_gemini_api_key');
     
-    // Reset states
     setUser({
       name: '',
       email: '',
@@ -134,29 +158,6 @@ const App: React.FC = () => {
     }
   };
 
-  const handleShowFeatures = () => setActiveTab('features');
-  const handleBackToLanding = () => setActiveTab('landing');
-
-  const handleGenerate = (newImages: GeneratedImage[]) => {
-    setGallery(prev => [...newImages, ...prev]);
-    if (credits.creditsRemaining > 9000) return;
-    setCredits(prev => {
-      const count = newImages.length;
-      if (prev.freeGenerationsRemaining > 0) {
-        const remaining = Math.max(0, prev.freeGenerationsRemaining - count);
-        return { ...prev, freeGenerationsRemaining: remaining };
-      }
-      return { ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - count) };
-    });
-  };
-
-  const handleUpdateImage = (oldId: string, newImage: GeneratedImage) => {
-    setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
-    if (selectedImage?.id === oldId) setSelectedImage(newImage);
-    if (credits.creditsRemaining > 9000) return;
-    setCredits(prev => ({ ...prev, creditsRemaining: Math.max(0, prev.creditsRemaining - 1) }));
-  };
-
   const navigateToBranding = (img: GeneratedImage) => {
     setSelectedImage(img);
     setActiveTab('branding');
@@ -171,7 +172,7 @@ const App: React.FC = () => {
     return (
       <LandingPage 
         onStart={handleStart} 
-        onExplore={handleShowFeatures} 
+        onExplore={() => setActiveTab('features')} 
         onLogin={handleLogin} 
         user={user} 
         onViewPrivacy={() => setActiveTab('privacy')}
@@ -181,7 +182,7 @@ const App: React.FC = () => {
   }
 
   if (activeTab === 'features') {
-    return <FeaturesPage onBack={handleBackToLanding} onStart={handleStart} />;
+    return <FeaturesPage onBack={() => setActiveTab('landing')} onStart={handleStart} />;
   }
 
   if (activeTab === 'privacy') {
