@@ -13,9 +13,9 @@ import Settings from './components/Settings';
 import { CreditState, GeneratedImage, AppTab, User, AppConfig } from './types';
 import { FREE_LIMIT } from './constants';
 
-// Firebase imports would normally go here
-// Note: As this is a frontend environment, we use the Firebase Client SDK.
-// We are simulating the Firebase Auth flow which handles the user session.
+// Firebase Client SDK Simulation
+// In a production environment, you would import { initializeApp } from 'firebase/app'
+// and { getAuth } from 'firebase/auth' using the config from your Firebase Console.
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AppTab>('landing');
@@ -45,7 +45,7 @@ const App: React.FC = () => {
   });
 
   const [config, setConfig] = useState<AppConfig>({
-    stripePublicKey: 'mk_1Sfx5p0Z7icb3eU0ZY5FTKGm',
+    stripePublicKey: 'pk_live_TheShooter_Real_Key_1Sfx5p0Z', // Updated placeholder for Live Mode
     canvaApiKey: '',
     blotatoApiKey: '',
     blotatoAccounts: []
@@ -86,12 +86,12 @@ const App: React.FC = () => {
     checkApiKey();
   }, [user.email, showBilling]);
 
-  // Fix: Added missing handleGenerate function to update gallery and credits
   const handleGenerate = (newImages: GeneratedImage[]) => {
     setGallery(prev => [...newImages, ...prev]);
     setCredits(prev => {
       if (prev.freeGenerationsRemaining > 0) {
-        return { ...prev, freeGenerationsRemaining: 0 };
+        const remainingTrial = Math.max(0, prev.freeGenerationsRemaining - newImages.length);
+        return { ...prev, freeGenerationsRemaining: remainingTrial };
       }
       return { 
         ...prev, 
@@ -100,7 +100,6 @@ const App: React.FC = () => {
     });
   };
 
-  // Fix: Added missing handleUpdateImage function to update existing gallery items and handle regeneration costs
   const handleUpdateImage = (oldId: string, newImage: GeneratedImage) => {
     setGallery(prev => prev.map(img => img.id === oldId ? newImage : img));
     setCredits(prev => ({

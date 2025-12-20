@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { User } from '../types';
 
@@ -20,16 +21,26 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
 
   const currentYear = new Date().getFullYear();
 
-  const handleAuthSubmit = (e: React.FormEvent) => {
+  const handleAuthSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
     if (!email || !password) return;
     
-    // In a real app, you would validate the password/account here
-    onLogin({ 
-      name: email.split('@')[0], 
-      email: email,
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
-    });
+    // Simulating Firebase client authentication
+    // In production, use signInWithEmailAndPassword or createUserWithEmailAndPassword from 'firebase/auth'
+    try {
+      if (password.length < 6) {
+        throw new Error('Password must be at least 6 characters.');
+      }
+      
+      onLogin({ 
+        name: email.split('@')[0], 
+        email: email,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`
+      });
+    } catch (err: any) {
+      setLoginError(err.message || 'Authentication failed.');
+    }
   };
 
   const handleAdminVerify = (e: React.FormEvent) => {
@@ -41,8 +52,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
       setLoginError('Invalid Access Token');
     }
   };
-
-  const isViteEnvMissing = !(import.meta as any).env?.VITE_GOOGLE_CLIENT_ID;
 
   const reviews = [
     {
@@ -153,17 +162,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onStart, onExplore, onLogin, 
                     <input 
                       type="password" 
                       required 
-                      placeholder="Password" 
+                      placeholder="Secure Password" 
                       value={password} 
                       onChange={(e) => setPassword(e.target.value)} 
                       className="w-full bg-slate-900 border border-slate-700 rounded-2xl px-6 py-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-sm" 
                     />
                   </div>
+                  {loginError && <p className="text-red-500 text-[10px] font-bold text-center">{loginError}</p>}
                   <button 
                     type="submit" 
                     className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black text-sm transition-all uppercase italic tracking-widest shadow-xl shadow-blue-900/20 active:scale-95"
                   >
-                    {isSignUp ? 'Create Studio' : 'Resume Session'}
+                    {isSignUp ? 'Create Studio Account' : 'Resume Session'}
                   </button>
                 </form>
 

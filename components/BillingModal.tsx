@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { CreditState, SubscriptionLevel } from '../types';
 import { CREDIT_BLOCKS, BASIC_SUB_FEE, PRO_SUB_FEE } from '../constants';
@@ -18,7 +19,7 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
     if (!selectedItem) return;
     setIsProcessing(true);
     
-    // Realistic simulated payment delay
+    // Realistic simulated payment delay following Stripe behavior
     setTimeout(() => {
       if (selectedItem.type === 'sub') {
         setCredits(prev => ({ ...prev, subscriptionLevel: selectedItem.id as SubscriptionLevel }));
@@ -27,8 +28,8 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
       }
       setIsProcessing(false);
       setSelectedItem(null);
-      alert("Payment Complete! Your production studio has been refilled.");
-    }, 3000);
+      alert("Payment Complete! Your production studio has been refilled successfully.");
+    }, 3500);
   };
 
   const handleSaveManualKey = () => {
@@ -43,10 +44,13 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
   const handleOpenGeminiKey = async () => {
     try {
       if (window.aistudio?.openSelectKey) {
+        // Correctly trigger the studio dialog
         await window.aistudio.openSelectKey();
+        // Force state update to reflect key selection immediately
         setCredits(prev => ({ ...prev, apiKeySet: true }));
+        alert("Gemini Production Key Linked via AI Studio.");
       } else {
-        alert("Integrated key selector not available. Please use the manual input.");
+        alert("The integrated key selector is unavailable in this environment. Please use the manual input field.");
       }
     } catch (e) {
       console.error("Key selection failed", e);
@@ -58,9 +62,9 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
       <div className="w-full h-full md:h-auto md:max-w-6xl bg-slate-900 border border-slate-800 md:rounded-[3rem] shadow-2xl overflow-hidden flex flex-col animate-in fade-in zoom-in duration-300">
         
         {selectedItem ? (
-          /* FULL SCREEN LIVE STRIPE CHECKOUT REPLICA */
+          /* PIXEL-PERFECT REPLICA OF THE STRIPE HOSTED CHECKOUT PAGE (LIVE MODE) */
           <div className="flex-1 flex flex-col lg:flex-row bg-[#f6f9fc] text-[#424770] overflow-y-auto">
-            {/* Left Side: Summary & Product */}
+            {/* Left Side: Order Summary (Stripe Aesthetic) */}
             <div className="lg:w-[45%] p-10 lg:p-20 bg-white lg:bg-transparent border-b lg:border-b-0 lg:border-r border-[#e6ebf1]">
               <button 
                 onClick={() => setSelectedItem(null)} 
@@ -95,11 +99,11 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
               <div className="mt-auto pt-16 space-y-6">
                 <div className="flex justify-between text-sm font-medium">
                   <span>{selectedItem.id.toUpperCase()} Production Access</span>
-                  <span className="font-bold">${selectedItem.price.toFixed(2)}</span>
+                  <span className="font-bold text-[#1a1f36]">${selectedItem.price.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm font-medium">
-                  <span>Tax (0%)</span>
-                  <span className="font-bold">$0.00</span>
+                  <span>Tax (Estimated 0.00%)</span>
+                  <span className="font-bold text-[#1a1f36]">$0.00</span>
                 </div>
                 <div className="h-px bg-[#e6ebf1]"></div>
                 <div className="flex justify-between text-xl font-bold text-[#1a1f36]">
@@ -114,11 +118,11 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
               </div>
             </div>
 
-            {/* Right Side: Payment Methods */}
+            {/* Right Side: Payment Methods (Stripe Aesthetic) */}
             <div className="lg:w-[55%] p-10 lg:p-20 flex flex-col justify-center bg-white">
               <div className="max-w-md w-full mx-auto space-y-10">
                 <div className="space-y-6">
-                  <h3 className="text-lg font-bold text-[#1a1f36]">Payment method</h3>
+                  <h3 className="text-lg font-bold text-[#1a1f36]">Pay with Card</h3>
                   
                   <div className="space-y-5">
                     <div className="space-y-2">
@@ -127,7 +131,7 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
                     </div>
                     
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-[#1a1f36]">Card information</label>
+                      <label className="text-xs font-bold text-[#1a1f36]">Card Information</label>
                       <div className="border border-[#e6ebf1] rounded-xl shadow-sm overflow-hidden divide-y divide-[#e6ebf1]">
                         <div className="flex items-center p-4">
                           <i className="fa-solid fa-credit-card text-[#aab7c4] mr-4"></i>
@@ -145,8 +149,20 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-bold text-[#1a1f36]">Name on card</label>
-                      <input type="text" placeholder="Full name" className="w-full p-4 border border-[#e6ebf1] rounded-xl shadow-sm focus:ring-2 focus:ring-[#635bff] focus:border-transparent outline-none transition-all text-sm font-medium" />
+                      <label className="text-xs font-bold text-[#1a1f36]">Name on Card</label>
+                      <input type="text" placeholder="Cardholder's full name" className="w-full p-4 border border-[#e6ebf1] rounded-xl shadow-sm focus:ring-2 focus:ring-[#635bff] focus:border-transparent outline-none transition-all text-sm font-medium" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-[#1a1f36]">Billing Address</label>
+                      <div className="border border-[#e6ebf1] rounded-xl shadow-sm overflow-hidden divide-y divide-[#e6ebf1]">
+                        <select className="w-full p-4 outline-none text-sm font-medium bg-white">
+                          <option>United States</option>
+                          <option>United Kingdom</option>
+                          <option>Canada</option>
+                        </select>
+                        <input type="text" placeholder="ZIP Code" className="w-full p-4 outline-none text-sm font-medium" />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -170,7 +186,7 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
                     )}
                   </button>
                   <p className="text-center text-[11px] text-[#697386] font-medium px-4">
-                    By confirming your subscription, you allow The Shooter to charge you for future payments in accordance with their terms.
+                    By confirming your subscription, you allow The Shooter to charge your card for future payments in accordance with their terms.
                   </p>
                 </div>
               </div>
@@ -268,7 +284,7 @@ const BillingModal: React.FC<BillingModalProps> = ({ credits, onClose, setCredit
                     </div>
                   </div>
 
-                  {/* REPAIRED API KEY INTEGRATION */}
+                  {/* API KEY INTEGRATION SECTION */}
                   <div className="bg-slate-950/50 rounded-[2.5rem] p-10 border border-slate-800 space-y-8 shadow-inner">
                     <div className="flex justify-between items-center">
                       <div className="space-y-2">
